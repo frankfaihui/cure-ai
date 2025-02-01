@@ -1,6 +1,15 @@
 require('dotenv').config(); // For environment variables (API keys)
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
+const { transcribeAudio } = require('./services/transcription');
+const OpenAI = require('openai');
+const fs = require('fs');
+const path = require('path');
+const tmp = require('tmp');
+const { Readable } = require('stream');
+const { File } = require('node:buffer');
+
 const app = express();
 const PORT = process.env.PORT || 8000;
 
@@ -8,32 +17,70 @@ const PORT = process.env.PORT || 8000;
 app.use(cors());
 app.use(express.json());
 
+const apiKey = process.env.OPENAI_API_KEY;
+const openai = new OpenAI({ apiKey });
+
 // ============================
 // In-memory conversation store
 // ============================
 let conversationHistory = []; // Each item could look like: { speaker: 'clinician' | 'patient', text: '...' }
+const upload = multer(); // in-memory storage
+
+
+function bufferToFile(buffer, fileName) {
+  // The library expects a recognized extension (e.g. .webm, .mp3, .wav)
+  return new File([buffer], fileName, { type: 'audio/webm' });
+}
+
 
 // ================================================
 // 1. Speech-to-Text (STT) Endpoint (Placeholder)
 // ================================================
-app.post('/api/stt', async (req, res) => {
+app.post('/api/stt', upload.single('audio'), async (req, res) => {
   try {
-    // Example: audio data or audio URL in the request body
-    const { audioData, language } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
 
-    // TODO: Call your STT provider here, for example:
-    // const transcription = await someSTTService(audioData, language);
+    // Write to a temp file
+    const tmpFile = tmp.fileSync({ postfix: '.webm' });
+    fs.writeFileSync(tmpFile.name, req.file.buffer);
 
-    // For PoC, return a dummy transcription
-    const transcription = 'Hello, this is a mock transcription!';
+    const transcription = await openai.audio.transcriptions.create({
+      file: bufferToFile(req.file.buffer, 'recording.webm'),
+      model: "whisper-1",
+      // language: "de", // this is optional but helps the model
+    });
 
-    // Store in conversation history
-    conversationHistory.push({ speaker: language === 'en' ? 'clinician' : 'patient', text: transcription });
+    fs.unlinkSync(tmpFile.name);
 
-    return res.json({ transcription });
+    // 2. Use the transcript to get a Chat Completion
+    const chatResponse = await openai.chat.completions.create({
+      model:"gpt-4o-mini",
+      messages: [
+        // You can add a system message here if desired:
+        {
+          role: 'system',
+          content: 'You are a medical assistant that provides concise answers for medical questions.'
+        },
+        {
+          role: 'user',
+          content: transcription.text
+        }
+      ],
+      // You can add parameters like temperature, max_tokens, etc.
+    });
+
+    // Extract the model’s reply
+    const aiReply = chatResponse.choices[0].message;
+
+    return res.json({ 
+      transcript: transcription.text,
+      gptResponse: aiReply
+    });
   } catch (error) {
-    console.error('STT error:', error);
-    return res.status(500).json({ error: 'Speech-to-Text failed' });
+    console.error('Transcription error:', error);
+    return res.status(500).json({ error: 'Transcription failed' });
   }
 });
 

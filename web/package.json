@@ -30,6 +30,7 @@
     "@tabler/icons-react": "^3.29.0",
     "@tanstack/react-query": "^5.66.0",
     "axios": "^1.7.9",
+    "hark": "^1.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.3",

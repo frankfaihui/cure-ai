@@ -15,6 +15,7 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { NavLink as RouterNavLink, Outlet } from 'react-router-dom';
 import { IconMicrophone, IconRepeat } from '@tabler/icons-react';
+import AudioRecorder from '@/components/AudioRecorder';
 
 // EXAMPLE: If you have any queries, import and use them here
 // import { useQuery } from '@tanstack/react-query';
@@ -88,7 +89,7 @@ export default function HomePage() {
           <Box>
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
           </Box>
-          <Title order={3}>CuraAI (Interpreter Example)</Title>
+          <Title order={3}>CuraAI</Title>
         </Flex>
       </AppShell.Header>
 
@@ -97,7 +98,7 @@ export default function HomePage() {
         {/* Scrollable area for links, etc. */}
         <AppShell.Section grow component={ScrollArea} p="sm">
           {/* Example NavLinks (RouterNavLink usage) */}
-          <NavLink
+          {/* <NavLink
             label="New Subscription"
             component={RouterNavLink}
             to="/my-list/new-subscription"
@@ -108,7 +109,7 @@ export default function HomePage() {
             component={RouterNavLink}
             to="/some-other-route"
             variant="light"
-          />
+          /> */}
 
           {/* If you had dynamic data from React Query, you could map it here */}
           {/* 
@@ -128,70 +129,20 @@ export default function HomePage() {
           */}
         </AppShell.Section>
 
-        <AppShell.Section p="sm">
+        {/* <AppShell.Section p="sm">
           <Button component={RouterNavLink} to="/sign-out" variant="subtle">
             Sign Out
           </Button>
-        </AppShell.Section>
+        </AppShell.Section> */}
       </AppShell.Navbar>
 
       {/* MAIN Content Area */}
       <AppShell.Main>
+        <AudioRecorder />
         {/* If you have nested routes, they render here */}
         <Outlet />
 
-        {/* Example: Our conversation UI below */}
-        <Title order={4} mt="lg">
-          Interpreter Demo
-        </Title>
 
-        {loading && (
-          <Loader variant="dots" size="lg" mt="md" />
-        )}
-
-        {/* Render conversation */}
-        {conversation.map((msg, idx) => (
-          <Card key={idx} shadow="sm" my="sm" p="md" withBorder>
-            {/* <Text weight={600} color={msg.speaker === 'clinician' ? 'blue' : 'green'}>
-              {msg.speaker.toUpperCase()}
-            </Text> */}
-            <Text>{msg.text}</Text>
-          </Card>
-        ))}
-
-        <Flex mt="md" gap="md" wrap="wrap" justify="start">
-          {/* Clinician Controls */}
-          <Button
-            leftIcon={<IconMicrophone size={18} />}
-          // onClick={() => handleRecord('clinician')}
-          >
-            Clinician Speak
-          </Button>
-          <Button
-            variant="outline"
-            leftIcon={<IconRepeat size={18} />}
-          // onClick={() => handleRepeat('clinician')}
-          >
-            Repeat Clinician
-          </Button>
-
-          {/* Patient Controls */}
-          <Button
-            color="green"
-            leftIcon={<IconMicrophone size={18} />}
-          // onClick={() => handleRecord('patient')}
-          >
-            Patient Speak
-          </Button>
-          <Button
-            variant="outline"
-            color="green"
-            leftIcon={<IconRepeat size={18} />}
-          // onClick={() => handleRepeat('patient')}
-          >
-            Repeat Patient
-          </Button>
-        </Flex>
       </AppShell.Main>
     </AppShell>
   );

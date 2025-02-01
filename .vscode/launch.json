@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Express with Nodemon (Mono Repo)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npx",
+            "runtimeArgs": [
+                "nodemon"
+            ],
+            "args": [
+                "${workspaceFolder}/api/server.js"
+            ],
+            "restart": true,
+            "envFile": "${workspaceFolder}/api/.env",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        }
+    ]
+}

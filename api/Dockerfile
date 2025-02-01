@@ -12,8 +12,8 @@ RUN npm install --production
 # Copy the rest of the application code
 COPY . .
 
-# The app listens on port 4000
-EXPOSE 4000
+# The app listens on port 8000
+EXPOSE 8000
 
 # Start the server
 CMD ["node", "server.js"]

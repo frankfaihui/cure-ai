@@ -1,8 +1,8 @@
 {
-  "name": "chatbot-api",
+  "name": "cure-ai-api",
   "version": "0.1.0",
   "bin": {
-    "chatbot-api": "bin/chatbot-api.js"
+    "cure-ai-api": "bin/cure-ai-api.js"
   },
   "scripts": {
     "build": "tsc",

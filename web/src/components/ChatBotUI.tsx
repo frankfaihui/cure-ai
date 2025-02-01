@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { WEBSOCKET_URL } from "@/config";
+// import { WEBSOCKET_URL } from "@/config";
 
 export default function ChatBotUI() {
   const [messages, setMessages] = useState<{ user: boolean; text: string }[]>([]);
@@ -21,28 +21,28 @@ export default function ChatBotUI() {
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // Connect to WebSocket
-    const ws = new WebSocket(WEBSOCKET_URL);
+  // useEffect(() => {
+  //   // Connect to WebSocket
+  //   const ws = new WebSocket(WEBSOCKET_URL);
 
-    ws.onopen = () => {
-      console.log("Connected to WebSocket");
-      setSocket(ws);
-    };
+  //   ws.onopen = () => {
+  //     console.log("Connected to WebSocket");
+  //     setSocket(ws);
+  //   };
 
-    ws.onmessage = (event) => {
-      setMessages((prev) => [...prev, { user: false, text: event.data }]);
-      setLoading(false);
-    };
+  //   ws.onmessage = (event) => {
+  //     setMessages((prev) => [...prev, { user: false, text: event.data }]);
+  //     setLoading(false);
+  //   };
 
-    ws.onclose = () => {
-      console.log("WebSocket disconnected");
-    };
+  //   ws.onclose = () => {
+  //     console.log("WebSocket disconnected");
+  //   };
 
-    return () => {
-      ws.close();
-    };
-  }, []);
+  //   return () => {
+  //     ws.close();
+  //   };
+  // }, []);
 
   useEffect(() => {
     if (bottomRef.current) {

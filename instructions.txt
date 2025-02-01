@@ -1,0 +1,60 @@
+[Hackathon Project] Interpreter Proof-of-Concept
+Problem:
+Non-english speaking patients are unable to communicate with clinicians who cannot speak the patients’
+language. Providers are required to hire in-person or virtual interpreters.
+Goals:
+Build an ideal multimodal, hands-free experience for a web-based Interpreter agent designed for an
+in-person visit that can interpret between the clinician (e.g. English-speaking) and the patient (e.g.
+Spanish-speaking), using speech input and output.
+NOTE: Utilize AI coding tools to develop the proof-of-concept (Copilot or Cursor or similar)
+Stack:
+Use the following stack:
+●
+ReactJS frontend: Bonus points if you use ReactJS in a principled manner:
+○
+Use of state management solution (e.g. redux)
+○
+Use of React routers
+○
+Design reusable React components
+●
+Node server
+●
+Pick your own database
+●
+Host on GCP/Vercel (or your choice of hosting solution)
+Deliverables:
+> Functional Proof-of-concept with these features:
+●
+Hands-free experience
+●
+Support at least 3 languages.
+●
+“Repeat that”: when a user says “repeat that”
+, repeat the other user’s previous sentence.
+●
+Intent Detection: Identify, parse and display these intents from the conversation along with their
+parameters: schedule followup appointment, send lab order, send referral.
+●
+Provide detailed summary of the full conversation in English
+●
+Text-to-speech output for each utterance
+●
+Support “barge in” where user can interrupt the interpreter
+> Design Doc that captures your thought process
+> Code uploaded to github
+Optional Resources:
+●
+VAD (or use any other library/technique to detect end of speech)
+●
+Deepgram
+●
+Google Translate
+●
+OpenAI APIs
+●
+AWS Speech-to-text
+●
+ElevenLabs
+●
+(API Keys: create your own. Free tier available for most services)

@@ -143,6 +143,10 @@ app.get('/health', (req, res) => {
   return res.json({ status: 'Server is healthy' });
 });
 
+app.get('/', (req, res) => {
+  return res.json({ status: 'Ok' });
+});
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);

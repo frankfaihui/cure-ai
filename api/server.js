@@ -30,10 +30,8 @@ function bufferToFile(buffer, fileName) {
 // ================================================
 app.post('/api/stt', upload.single('audio'), async (req, res) => {
   try {
-    const chatId = req.body.chatId;
-    if (!chatId) {
-      return res.status(400).json({ error: 'Chat ID is required' });
-    }
+    const chatId = req.body.chatId || 'default';
+
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }

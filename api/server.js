@@ -72,11 +72,11 @@ app.post('/api/stt', upload.single('audio'), async (req, res) => {
     });
 
     // Extract the model’s reply
-    const aiReply = chatResponse.choices[0].message;
+    const aiResponse = chatResponse.choices[0].message?.content;
 
-    return res.json({ 
+    return res.json({
       transcript: transcription.text,
-      gptResponse: aiReply
+      aiResponse
     });
   } catch (error) {
     console.error('Transcription error:', error);

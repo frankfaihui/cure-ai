@@ -1,13 +1,8 @@
-require('dotenv').config(); // For environment variables (API keys)
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const { transcribeAudio } = require('./services/transcription');
 const OpenAI = require('openai');
-const fs = require('fs');
-const path = require('path');
-const tmp = require('tmp');
-const { Readable } = require('stream');
 const { File } = require('node:buffer');
 
 const app = express();
@@ -20,152 +15,87 @@ app.use(express.json());
 const apiKey = process.env.OPENAI_API_KEY;
 const openai = new OpenAI({ apiKey });
 
-// ============================
-// In-memory conversation store
-// ============================
-let conversationHistory = []; // Each item could look like: { speaker: 'clinician' | 'patient', text: '...' }
+// ============================================
+// In-memory conversation store per chatId
+// ============================================
+let conversationHistories = {}; // Example structure: { chatId1: [ { role: 'user'|'assistant', content: '...' } ], chatId2: [...] }
 const upload = multer(); // in-memory storage
 
-
 function bufferToFile(buffer, fileName) {
-  // The library expects a recognized extension (e.g. .webm, .mp3, .wav)
   return new File([buffer], fileName, { type: 'audio/webm' });
 }
 
-
 // ================================================
-// 1. Speech-to-Text (STT) Endpoint (Placeholder)
+// 1. Speech-to-Text (STT) and Chat Endpoint
 // ================================================
 app.post('/api/stt', upload.single('audio'), async (req, res) => {
   try {
+    const chatId = req.body.chatId;
+    if (!chatId) {
+      return res.status(400).json({ error: 'Chat ID is required' });
+    }
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Write to a temp file
-    const tmpFile = tmp.fileSync({ postfix: '.webm' });
-    fs.writeFileSync(tmpFile.name, req.file.buffer);
+    // Ensure a conversation history exists for this chatId
+    if (!conversationHistories[chatId]) {
+      conversationHistories[chatId] = [];
+    }
 
+    // Transcribe audio using the Whisper model
     const transcription = await openai.audio.transcriptions.create({
       file: bufferToFile(req.file.buffer, 'recording.webm'),
       model: "whisper-1",
-      // language: "de", // this is optional but helps the model
+      // Optional: specify language if needed, e.g., language: "de"
     });
 
-    fs.unlinkSync(tmpFile.name);
+    // Append the transcribed text as a user message to the conversation history
+    conversationHistories[chatId].push({ role: 'user', content: transcription.text });
 
-    // 2. Use the transcript to get a Chat Completion
+    // Create a chat completion including the full conversation history
     const chatResponse = await openai.chat.completions.create({
-      model:"gpt-4o-mini",
+      model: "gpt-4o-mini",
       messages: [
-        // You can add a system message here if desired:
         {
           role: 'system',
           content: 'You are a medical assistant that provides concise answers for medical questions.'
         },
-        {
-          role: 'user',
-          content: transcription.text
-        }
+        ...conversationHistories[chatId]
       ],
-      // You can add parameters like temperature, max_tokens, etc.
+      // Optional: additional parameters such as temperature or max_tokens
     });
 
-    // Extract the model’s reply
+    // Extract and save the assistant's reply
     const aiResponse = chatResponse.choices[0].message?.content;
+    conversationHistories[chatId].push({ role: 'assistant', content: aiResponse });
 
     return res.json({
       transcript: transcription.text,
       aiResponse
     });
   } catch (error) {
-    console.error('Transcription error:', error);
-    return res.status(500).json({ error: 'Transcription failed' });
-  }
-});
-
-// =================================================
-// 2. Text-to-Speech (TTS) Endpoint (Placeholder)
-// =================================================
-app.post('/api/tts', async (req, res) => {
-  try {
-    const { text, targetLanguage } = req.body;
-
-    // TODO: Call TTS provider here:
-    // const audioUrlOrBuffer = await someTTSService(text, targetLanguage);
-
-    // For PoC, return a dummy URL (or base64 audio)
-    const audioUrlOrBuffer = 'https://fake-tts-audio.com/audio-sample';
-
-    return res.json({ audioUrl: audioUrlOrBuffer });
-  } catch (error) {
-    console.error('TTS error:', error);
-    return res.status(500).json({ error: 'Text-to-Speech failed' });
-  }
-});
-
-// =================================================
-// 3. Translation Endpoint (Placeholder)
-// =================================================
-app.post('/api/translate', async (req, res) => {
-  try {
-    const { text, sourceLanguage, targetLanguage } = req.body;
-
-    // TODO: Call translation provider (e.g. Google Translate API)
-    // const translatedText = await translateService(text, sourceLanguage, targetLanguage);
-
-    // For PoC, return a dummy translation
-    const translatedText = `Translated(${targetLanguage}): ${text}`;
-
-    return res.json({ translatedText });
-  } catch (error) {
-    console.error('Translation error:', error);
-    return res.status(500).json({ error: 'Translation failed' });
-  }
-});
-
-// =============================================================
-// 4. Intent Detection Endpoint (Placeholder)
-//    - Could also be handled inline in STT route or after STT.
-// =============================================================
-app.post('/api/intent', (req, res) => {
-  try {
-    const { text } = req.body;
-
-    // Simple rule-based detection for PoC:
-    let intent = 'none';
-    if (text.includes('follow-up')) {
-      intent = 'scheduleFollowUp';
-    } else if (text.includes('lab order')) {
-      intent = 'sendLabOrder';
-    } else if (text.includes('referral')) {
-      intent = 'sendReferral';
-    }
-
-    // Return identified intent
-    return res.json({ intent });
-  } catch (error) {
-    console.error('Intent detection error:', error);
-    return res.status(500).json({ error: 'Intent detection failed' });
+    console.error('Transcription/Chat error:', error);
+    return res.status(500).json({ error: 'Transcription or chat completion failed' });
   }
 });
 
 // =============================================
-// 5. Summary Endpoint (Placeholder)
+// 2. Summary Endpoint
 // =============================================
 app.get('/api/summary', async (req, res) => {
   try {
-    // Example: Summarize entire conversation in English
-    // For a quick PoC, you can do something like:
-    //  - send conversationHistory to an LLM (OpenAI) for summarization
-    //  - or return a simple concatenation
+    const chatId = req.query.chatId;
+    if (!chatId) {
+      return res.status(400).json({ error: 'Chat ID is required' });
+    }
+    if (!conversationHistories[chatId]) {
+      return res.status(404).json({ error: 'Chat not found' });
+    }
 
-    // TODO: real LLM call if you want advanced summary
-    // const summary = await openAILLM(conversationHistory);
-
-    // For PoC, return a naive summary:
-    const naiveSummary = conversationHistory
-      .map((entry) => `${entry.speaker.toUpperCase()}: ${entry.text}`)
+    // Create a simple summary by concatenating all messages for this chat
+    const naiveSummary = conversationHistories[chatId]
+      .map((entry) => `${entry.role.toUpperCase()}: ${entry.content}`)
       .join(' | ');
 
     return res.json({ summary: naiveSummary });
@@ -175,16 +105,8 @@ app.get('/api/summary', async (req, res) => {
   }
 });
 
-// =================================================
-// 6. Clear conversation history (for debugging)
-// =================================================
-app.delete('/api/conversation', (req, res) => {
-  conversationHistory = [];
-  return res.json({ message: 'Conversation history cleared.' });
-});
-
 // =============================================
-// Health Check Endpoint
+// Health Check Endpoints
 // =============================================
 app.get('/health', (req, res) => {
   return res.json({ status: 'Server is healthy' });

@@ -21,6 +21,7 @@ interface Message {
 }
 
 const AudioRecorder: React.FC = () => {
+  const [chatId, setChatId] = useState('');
   const [isDetecting, setIsDetecting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -34,29 +35,27 @@ const AudioRecorder: React.FC = () => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Automatically start recording when component mounts
+  // Generate a unique chat ID when the component mounts
   useEffect(() => {
+    const newChatId = `chat-${Date.now()}`;
+    setChatId(newChatId);
     startAutoRecording();
-    // Cleanup on unmount, if desired
     return () => {
       stopAutoRecording();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Start auto-detecting speech
+  // Start auto-detecting speech and recording
   const startAutoRecording = async () => {
     try {
-      // Ask for microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
       const speechEvents = hark(stream, {});
       speechEventsRef.current = speechEvents;
 
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
 
-      // Start recording when user starts speaking
+      // Start recording when speech is detected
       speechEvents.on('speaking', () => {
         if (mediaRecorder.state !== 'recording') {
           console.log('Speech detected: starting recording...');
@@ -64,7 +63,7 @@ const AudioRecorder: React.FC = () => {
         }
       });
 
-      // Stop recording when user stops speaking
+      // Stop recording when silence is detected
       speechEvents.on('stopped_speaking', () => {
         if (mediaRecorder.state === 'recording') {
           console.log('Silence detected: stopping recording...');
@@ -72,13 +71,14 @@ const AudioRecorder: React.FC = () => {
         }
       });
 
-      // Handle the recorded chunk
+      // Handle recorded audio chunks
       mediaRecorder.ondataavailable = async (event: BlobEvent) => {
         if (event.data.size > 0) {
-          setLoading(true); // show loader
+          setLoading(true);
           const audioBlob = event.data;
           const formData = new FormData();
           formData.append('audio', audioBlob, 'recording.webm');
+          formData.append('chatId', chatId);
 
           try {
             const response = await fetch(`${API_BASE_URL}/api/stt`, {
@@ -86,9 +86,8 @@ const AudioRecorder: React.FC = () => {
               body: formData,
             });
             const data = await response.json();
-            // data = { transcript: "User's text", aiResponse: "Bot's reply" }
+            // data contains: { transcript: "User's text", aiResponse: "Bot's reply" }
 
-            // Update the chat history
             setMessages((prev) => [
               ...prev,
               { user: true, text: data.transcript || '[No user transcript]' },
@@ -97,7 +96,7 @@ const AudioRecorder: React.FC = () => {
           } catch (err) {
             console.error('Transcription error:', err);
           } finally {
-            setLoading(false); // hide loader
+            setLoading(false);
           }
         }
       };
@@ -108,16 +107,14 @@ const AudioRecorder: React.FC = () => {
     }
   };
 
-  // Stop recording + cleanup
+  // Stop recording and clean up resources
   const stopAutoRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
-    // Stop all tracks
     if (mediaRecorderRef.current?.stream) {
       mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
     }
-    // Stop hark events
     if (speechEventsRef.current) {
       speechEventsRef.current.stop();
     }
@@ -128,43 +125,24 @@ const AudioRecorder: React.FC = () => {
     <Container size="sm" mt="xl">
       <Stack spacing="md">
         <Title order={3}>Speak to Your AI Medical Assistant</Title>
-
-        {/* Start / Stop buttons (with a loader to show network activity) */}
         <Flex gap="md">
-          <Button
-            onClick={startAutoRecording}
-            disabled={isDetecting}
-            color="blue"
-          >
+          <Button onClick={startAutoRecording} disabled={isDetecting} color="blue">
             Start
           </Button>
-          <Button
-            onClick={stopAutoRecording}
-            disabled={!isDetecting}
-            color="red"
-          >
+          <Button onClick={stopAutoRecording} disabled={!isDetecting} color="red">
             Stop
           </Button>
           {loading && <Loader size="sm" />}
         </Flex>
-
-        {/* Chat display */}
         <Paper shadow="sm" p="md" radius="md" withBorder>
           <ScrollArea style={{ height: 400, marginBottom: '1rem' }}>
             {messages.map((msg, index) =>
               msg.user ? (
-                <Text
-                  key={index}
-                  mt="sm"
-                  sx={{ color: 'blue', textAlign: 'right' }}
-                >
+                <Text key={index} mt="sm" sx={{ color: 'blue', textAlign: 'right' }}>
                   You: {msg.text}
                 </Text>
               ) : (
-                <div
-                  key={index}
-                  style={{ textAlign: 'left', marginTop: '0.5rem' }}
-                >
+                <div key={index} style={{ textAlign: 'left', marginTop: '0.5rem' }}>
                   <Text fw="bold">Bot:</Text>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {msg.text}

@@ -5,7 +5,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "npm run eslint && npm run stylelint",
@@ -46,6 +46,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
+    "@types/hark": "^1.2.5",
     "@types/node": "^22.10.5",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

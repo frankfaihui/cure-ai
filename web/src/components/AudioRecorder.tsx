@@ -21,10 +21,13 @@ interface Message {
 }
 
 const AudioRecorder: React.FC = () => {
-  const [chatId, setChatId] = useState('');
+  const [chatId] = useState(`chat-${Date.now()}`);
+  // Initialize with a default greeting message from the bot
+  const [messages, setMessages] = useState<Message[]>([
+    { user: false, text: "Hello, I'm your AI Medical Assistant. How can I help you today?" }
+  ]);
   const [isDetecting, setIsDetecting] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const speechEventsRef = useRef<any>(null);
@@ -35,10 +38,7 @@ const AudioRecorder: React.FC = () => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Generate a unique chat ID when the component mounts
   useEffect(() => {
-    const newChatId = `chat-${Date.now()}`;
-    setChatId(newChatId);
     startAutoRecording();
     return () => {
       stopAutoRecording();
@@ -87,7 +87,6 @@ const AudioRecorder: React.FC = () => {
             });
             const data = await response.json();
             // data contains: { transcript: "User's text", aiResponse: "Bot's reply" }
-
             setMessages((prev) => [
               ...prev,
               { user: true, text: data.transcript || '[No user transcript]' },

@@ -24,7 +24,7 @@ const AudioRecorder: React.FC = () => {
   const [chatId] = useState(`chat-${Date.now()}`);
   // Initialize with a default greeting message from the bot
   const [messages, setMessages] = useState<Message[]>([
-    { user: false, text: "Hello, I'm your AI Medical Assistant. I will be here to provide help between patients and doctor." }
+    { user: false, text: "Hello, I'm your AI Medical Assistant. I will be here to provide help between patient and doctor." }
   ]);
   const [isDetecting, setIsDetecting] = useState(false);
   const [loading, setLoading] = useState(false);

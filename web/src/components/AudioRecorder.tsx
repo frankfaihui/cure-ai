@@ -24,7 +24,7 @@ const AudioRecorder: React.FC = () => {
   const [chatId] = useState(`chat-${Date.now()}`);
   // Initialize with a default greeting message from the bot
   const [messages, setMessages] = useState<Message[]>([
-    { user: false, text: "Hello, I'm your AI Medical Assistant. How can I help you today?" }
+    { user: false, text: "Hello, I'm your AI Medical Assistant. I will be here to provide help between patients and doctor." }
   ]);
   const [isDetecting, setIsDetecting] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -138,11 +138,11 @@ const AudioRecorder: React.FC = () => {
             {messages.map((msg, index) =>
               msg.user ? (
                 <Text key={index} mt="sm" sx={{ color: 'blue', textAlign: 'right' }}>
-                  You: {msg.text}
+                  {msg.text}
                 </Text>
               ) : (
                 <div key={index} style={{ textAlign: 'left', marginTop: '0.5rem' }}>
-                  <Text fw="bold">Bot:</Text>
+                  <Text fw="bold">AI Interpreter:</Text>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {msg.text}
                   </ReactMarkdown>

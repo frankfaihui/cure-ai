@@ -1,4 +1,4 @@
-# AI Medical Assistant (Hackathon Project)
+# AI Medical Assistant
 
 A quick **prototype** that records speech, transcribes it via **OpenAI Whisper**, and generates **concise, medically oriented replies** using **GPT**. The **Node/Express** server handles transcription and chat logic, while the **React** frontend automatically detects speech, records audio, and displays a simple chat interface.
 
